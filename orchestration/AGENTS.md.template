@@ -1,0 +1,288 @@
+# Agent rules for {{PROJECT_NAME}}
+
+<!--
+Generated from AGENTS.md.template by generate_agents.py. Sections marked
+"EDIT" hold examples in <angle brackets>: replace them by hand with your
+project's own rules, or delete them.
+-->
+
+## Local project layout
+<!-- EDIT: one line per repository or folder agents work in. -->
+- `{{PROJECT_DIR}}` contains <the library and its tests>.
+- `<../examples>` contains <runnable examples that use the local library>.
+- `<../paper>` contains <the manuscript>; follow its style guide when editing it.
+- When an algorithm change reaches its final form, add a paragraph to the
+  manuscript explaining how the new behavior works.
+
+## Python and environment (all agents)
+- Python {{PYTHON_VERSION}} is the project baseline; older versions are unsupported.
+- On Apple Silicon, use native ARM64 Python and `osx-arm64` packages, not Intel
+  (`x86_64` / `osx-64`) or Rosetta environments. Verify `platform.machine()`
+  reports `arm64` before Python work. Create each environment with
+  `CONDA_SUBDIR=osx-arm64 conda env create -f <file>` and persist
+  `subdir: osx-arm64` in its conda configuration. (Delete this item on other
+  platforms.)
+- There are two conda environments. Do not use base/system Python.
+
+  | Environment | File | Use for |
+  |---|---|---|
+  | `{{DEV_ENV}}` | `{{DEV_ENV_FILE}}` | Development: the minimum needed to import and change the code. No test, plotting, or optional framework packages. |
+  | `{{TEST_ENV}}` | `{{TEST_ENV_FILE}}` | Tests, benchmarks, plots, and optional integrations: the development packages plus the testing and optional dependencies. |
+
+- Keep `{{DEV_ENV}}` minimal to avoid dependency conflicts. Never install
+  optional libraries into it; add them to `{{TEST_ENV_FILE}}` (and to the
+  matching extra in `pyproject.toml`) instead.
+- Before running Python work, verify `conda run -n <env> python --version`
+  reports {{PYTHON_VERSION}} or newer. Activate with `conda activate <env>`, or
+  prefix commands with `conda run -n <env>` in noninteractive shells.
+- Update with `conda env update -n {{DEV_ENV}} -f {{DEV_ENV_FILE}}` or
+  `conda env update -n {{TEST_ENV}} -f {{TEST_ENV_FILE}}`.
+- Benchmark and paper runs record the interpreter, platform, and package
+  versions with every result. Scripts that take the interpreter from `PY` use
+  `PY={{TEST_PYTHON}}`.
+- Include the environment requirement (which env, and why) in every delegated
+  implementation or review prompt, including Agy, Codex, and Claude jobs.
+
+## Cluster jobs
+- Cluster job scripts live in `{{CLUSTER_JOBS_DIR}}` (its own repo and README).
+  Long runs go to the {{CLUSTER_NAME}} cluster by preference. Use a new run tag
+  for each release run.
+- Never delete files on the cluster; {{OWNER_NAME}} does that by hand.
+- Do not run heavy commands (`du`, `find`, Python) on a login node; submit them
+  as jobs.
+
+## Authorship
+- Author/committer email must be `{{GIT_EMAIL}}` (set in this repo's local git
+  config; don't override it, and never use {{FORBIDDEN_EMAIL}} or any other
+  address).
+- Do NOT add AI attribution of any kind: no `Co-Authored-By:` trailers, no
+  "Generated with …" lines, in commit messages or PR descriptions.
+
+## Commit messages
+- Short imperative subject line (≤ ~72 chars), e.g.
+  "Add caching for repeated solver calls".
+- Optional body explaining what changed and why; no trailers.
+- Commit only when asked.
+
+## Branches and remotes
+- `origin` = {{PUBLIC_REPO_URL}} (PUBLIC).
+- `private` = {{PRIVATE_REPO_URL}}.
+- Push routine work to `private` only.
+- Never push to `origin/main` unless explicitly asked. When asked, it must be a
+  fast-forward (no force push, no history rewrite), after checking:
+    git log --format='%h %ae' origin/main..HEAD   # all noreply email
+    git log --format='%B' origin/main..HEAD | grep -iE 'co-authored|generated'  # must be empty
+- Run `git status -sb` before any push to confirm which branch you're on.
+
+## Before committing
+- Run the test suite: `{{TEST_COMMAND}}`.
+- Don't commit .vscode/, AGENTS.md, secrets, or absolute local paths.
+- Keep memory use bounded; benchmarks may use at most {{MAX_CORES}} cores.
+<!-- EDIT: project-specific rules, for example: -->
+- <Pinned-baseline tests compare exact outputs; if they change, explain why rather than re-pinning.>
+- <Don't edit vendored code in `src/<package>/_vendor/` beyond import paths.>
+
+## Launching Agy and Codex jobs
+
+Run these commands from the repository root. Read this file before dispatching;
+include the task, owned files, verification steps, and "Do not commit or push"
+in each implementation prompt unless the user has explicitly authorized those
+actions. Launch delegated jobs only when requested. Give concurrent jobs
+non-overlapping file ownership and preserve existing working-tree changes.
+
+### Agy CLI
+
+Exact executable path on this machine: `{{AGY_BIN}}`.
+Use the quoted absolute path in place of `agy` below when PATH is unavailable.
+
+Inspect installed flags and available model IDs before choosing a model:
+
+```bash
+agy --help
+agy models
+```
+
+Interactive session:
+
+```bash
+agy --model gemini-3.8-flash-medium
+```
+
+Noninteractive job (substitute the actual scoped task). Headless `-p` mode
+cannot prompt, so any job that runs shell commands (Python, tests, `ls`, `cat`)
+needs `--dangerously-skip-permissions`:
+
+```bash
+agy --model gemini-3.8-flash-medium --effort medium \
+  --dangerously-skip-permissions --output-format text --print-timeout 10m \
+  -p 'Read AGENTS.md. Implement <task> in <owned files>. Run <checks>. Do not commit or push.' \
+  > /tmp/{{PROJECT_NAME}}-agy-job.log 2>&1
+```
+
+- `--mode accept-edits` approves file edits only. In `-p` mode every shell
+  command is auto-denied, and the job exits 0 with only this line in its log:
+  `jetski: no output produced — a tool required the "command" permission that
+  headless mode cannot prompt for, so it was auto-denied.` Exit code 0 does not
+  mean the job ran; check the log and the expected output files.
+- `--settings '{"permissions":{"allow":["command(...)"]}}'` did not allow
+  commands in headless mode (tested November 20, 2026). Do not rely on per-command
+  allow rules; use `--dangerously-skip-permissions` or an interactive `agy -i` session.
+- With permissions skipped, file limits exist only in the prompt. State the
+  owned paths and forbidden edits explicitly, and check `git status` in every
+  affected repo afterwards.
+- When launching from Claude Code, the outer `Bash` call to agy is gated
+  separately by Claude Code's own permissions. Allow it with
+  `"permissions": {"allow": ["Bash({{AGY_BIN}}:*)"]}` in
+  `.claude/settings.json`, or approve the prompt.
+- Model IDs above were available when this file was written; recheck with
+  `agy models` rather than assuming availability or quota.
+- `--mode auto` may be unavailable for an account and fall back to the default
+  mode. Do not rely on it for unattended execution.
+- Gemini Flash accepted `--effort medium` / `high`. Sonnet rejected the generic
+  `--effort high` flag; omit `--effort` when using its built-in thinking mode.
+- For an authorized unattended run, `--dangerously-skip-permissions` auto-approves
+  tool requests; it does not provide filesystem isolation. Use it only within
+  the authorized scope and an appropriately isolated execution environment.
+- `--output-format text` writes nothing to the log until the job ends, so a
+  running job can only be followed through the files it creates. For long jobs
+  prefer `--output-format stream-json` (one JSON event per line, written as the
+  job runs) and follow it with `tail -f` on the log.
+- `--output-format json` is also available for a single structured result.
+  Treat a timeout/interruption as incomplete work, inspect the log and working
+  tree, and confirm the job has stopped before reassigning its files.
+- Resume a specific job with `agy --conversation <id> -p '<follow-up>'`.
+  `agy --continue` resumes the latest conversation; avoid that shortcut when
+  multiple jobs are running. Sonnet and Google-model quota availability can
+  differ; a Sonnet quota error does not establish that Google models are blocked.
+
+### Codex CLI
+
+Exact npm-installed executable path on this machine: `{{CODEX_BIN}}`
+(global npm prefix: `{{NPM_PREFIX}}`).
+Use the quoted absolute path in place of `codex` below when PATH is unavailable.
+
+Default to `gpt-6.2-sol` for Codex jobs when it is available on the current
+account. Check the [current Codex pricing](https://learn.chatgpt.com/docs/pricing)
+before choosing a model or speed mode based on cost.
+
+Inspect the installed CLI before dispatching.
+
+```bash
+codex --help
+codex exec --help
+```
+
+Interactive session with workspace writes and automatic approval review:
+
+```bash
+codex -C . --approve-for-me -m gpt-6.2-sol
+```
+
+Noninteractive implementation job with workspace writes:
+
+```bash
+codex exec -C . -s workspace-write \
+  -m gpt-6.2-sol -c 'model_reasoning_effort="medium"' \
+  --output-last-message /tmp/{{PROJECT_NAME}}-codex-result.md \
+  'Read AGENTS.md. Implement <task> in <owned files>. Run <checks>. Do not commit or push.' \
+  > /tmp/{{PROJECT_NAME}}-codex-job.log 2>&1
+```
+
+- Codex CLI 0.170.0 does not accept the legacy `--full-auto` flag.
+  Use `-s workspace-write` (equivalently `--sandbox workspace-write`) for
+  noninteractive implementation jobs.
+- In codex-cli 0.170, `--approve-for-me` cannot be combined with `--sandbox`;
+  it already implies the workspace-write sandbox. Pass `--sandbox` only without it.
+- `--approve-for-me` routes approval requests through automatic review; it does
+  not remove sandbox restrictions or guarantee that every action is approved.
+- For a review job, select `--sandbox read-only` and explicitly request no edits.
+- `codex exec --json` emits JSONL events; `--output-last-message` saves the final
+  response separately. Keep each job's log/result paths distinct.
+- Resume a specific job with `codex exec resume <session-id> '<follow-up>'`;
+  inspect `codex exec resume --help` for installed options. Avoid `--last` when
+  coordinating concurrent sessions.
+- Use medium reasoning for routine adapters, documentation, and cleanup; use
+  high reasoning for numerical algorithms, precision issues, and proofs. Choose
+  the least costly suitable available model and bound review scope and runtime.
+  Do not launch new model jobs merely to test these examples.
+
+### Claude Code CLI
+
+- Launcher: `~/.local/bin/claude` (on PATH), a symlink to the versioned binary
+  in `~/.local/share/claude/versions/<version>`. The native installer
+  auto-updates and repoints the symlink, so always call plain `claude`, never a
+  versioned path.
+- Auth and settings: `~/.claude/` (user), `.claude/settings.json` (project).
+- If `claude` is missing from PATH (for example a non-login shell), use
+  `"$HOME/.local/bin/claude"`.
+
+```bash
+claude --version
+claude --help
+```
+
+Interactive session:
+
+```bash
+claude --model claude-opus-5-5
+```
+
+Noninteractive implementation job:
+
+```bash
+claude -p --model claude-opus-5-5 --effort high \
+  --permission-mode acceptEdits --output-format text \
+  --max-budget-usd 10 \
+  'Read AGENTS.md. Implement <task> in <owned files>. Run <checks>. Do not commit or push.' \
+  > /tmp/{{PROJECT_NAME}}-claude-job.log 2>&1
+```
+
+- Models: `claude-opus-5-5` (numerical algorithms, precision issues, proofs),
+  `claude-sonnet-5-5` (routine adapters, docs, cleanup), `claude-haiku-5-5`
+  (small mechanical edits).
+- `--effort` takes `low|medium|high|xhigh|max`. Suggested levels:
+
+  | Task | Model | Effort |
+  |---|---|---|
+  | Mechanical edits, renames, import fixes | `claude-haiku-5-5` | `low` |
+  | Docs, docstrings, adapters, cleanup, benchmark plumbing | `claude-sonnet-5-5` | `medium` |
+  | Numerical algorithms, precision, proofs in comments | `claude-opus-5-5` | `high` |
+  | Hard proofs or debugging that `high` did not resolve | `claude-opus-5-5` | `xhigh` |
+  | Code review of a work package | `claude-sonnet-5-5` or `claude-opus-5-5` | `medium` / `high` |
+
+  Reserve `max` for an explicit request; it is the slowest and costliest.
+- `--permission-mode acceptEdits` auto-approves file edits but still gates
+  shell commands. To let the job run the tests unattended, allow exactly that
+  command, e.g. `--allowedTools 'Bash({{TEST_COMMAND}}*)' 'Bash(git status*)' 'Bash(git diff*)'`,
+  rather than `--dangerously-skip-permissions`.
+- Review job (read-only, no edits):
+
+  ```bash
+  claude -p --model claude-sonnet-5-5 --effort medium \
+    --permission-mode plan --output-format text \
+    'Read AGENTS.md. Review <files or diff> against <design doc>. Report findings only. Do not edit, commit, or push.' \
+    > /tmp/{{PROJECT_NAME}}-claude-review.log 2>&1
+  ```
+
+- Structured output and resume:
+
+  ```bash
+  claude -p --model claude-opus-5-5 --effort high --permission-mode acceptEdits \
+    --output-format json '<task>' > /tmp/{{PROJECT_NAME}}-claude-wp1.json
+  SID=$(python -c 'import json;print(json.load(open("/tmp/{{PROJECT_NAME}}-claude-wp1.json"))["session_id"])')
+  claude -p --resume "$SID" '<follow-up>' >> /tmp/{{PROJECT_NAME}}-claude-wp1.log 2>&1
+  ```
+
+- `-p` jobs run in the foreground; background them with `&` or `nohup` and
+  check the log. `--max-budget-usd` caps spend; a job that hits the cap stops
+  incomplete, so inspect the working tree before reassigning its files.
+- `--output-format json` returns the final result with a `session_id`;
+  `stream-json` emits events. Keep each job's log path distinct.
+- Resume a specific job with `claude -p --resume <session-id> '<follow-up>'`.
+  Avoid `--continue` when several jobs are running.
+- Claude follows this file's commit rules too: no `Co-Authored-By` or
+  "Generated with" lines, and the noreply author email.
+
+These launch instructions do not authorize commits, pushes, changes outside the
+assigned scope, or edits to vendored code. Keep this local `AGENTS.md`
+uncommitted as required above.

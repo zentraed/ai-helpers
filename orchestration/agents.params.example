@@ -1,0 +1,30 @@
+# Copy to <name>.params (gitignored), fill in, then:
+#   python3 generate_agents.py --params-file <name>.params -o /path/to/repo/AGENTS.md
+
+# Project
+PROJECT_NAME=mylib
+PROJECT_DIR=../mylib
+PYTHON_VERSION=3.12
+DEV_ENV=mylib
+DEV_ENV_FILE=environment.yml
+TEST_ENV=mylib-bench
+TEST_ENV_FILE=environment-bench.yml
+TEST_PYTHON=/path/to/conda/envs/mylib-bench/bin/python
+TEST_COMMAND=conda run -n mylib-bench python -m pytest
+MAX_CORES=4
+
+# Cluster
+CLUSTER_JOBS_DIR=../clusterjobs/mylib
+CLUSTER_NAME=University
+OWNER_NAME=Owner
+
+# Identity and remotes
+GIT_EMAIL=12345+user@users.noreply.github.com
+FORBIDDEN_EMAIL=personal@example.com
+PUBLIC_REPO_URL=github.com/user/mylib
+PRIVATE_REPO_URL=github.com/user/mylib-private
+
+# Tools
+AGY_BIN=/path/to/.local/bin/agy
+CODEX_BIN=/path/to/bin/codex
+NPM_PREFIX=/path/to/npm-prefix
