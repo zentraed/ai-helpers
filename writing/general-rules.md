@@ -42,7 +42,7 @@ Last updated 2026-11-23.
 ### 1.4 Word choice and anti-jargon rules
 
 1. **No hedging:** Avoid "may suggest", "appears to", "somewhat", and "arguably". State the result together with its condition.
-2. **No promotional language** *(house style word list)*: Avoid "powerful", "elegant", "straightforward", "hallmark", "remarkable", "striking", and "novel".
+2. **No subjective praise words** *(house style word list)*: Avoid "powerful", "elegant", "straightforward", "hallmark", "remarkable", "striking", and "novel".
 3. **Standard terminology only:** Use the established terms of the field (see the paper's glossary). Never invent metaphors, codebase nicknames, or AI-coined labels.
 4. **Never leak internal jargon into prose:** Translate codebase identifiers, lab shorthand, and nicknames into standard scientific English. The paper-specific file lists the terms to translate.
 5. **One concept, one name:** Use the same term consistently across text, equations, captions, and figure axes. Do not introduce a new label for a concept used only once.
@@ -69,7 +69,7 @@ Last updated 2026-11-23.
 ### 1.7 Citations
 
 1. Cite the peer-reviewed published version by DOI; cite a preprint only when no published version exists.
-2. Keep a local copy of every cited work and check claims against it (Section 1.9 says where the copies live). Never invent a DOI.
+2. Keep a local copy of every cited work and check claims against it (Section 1.9, Author workflow preferences, says where the copies live). Never invent a DOI.
 3. Cite both the paper that originated a result and the specific source of any quoted number or statement.
 
 ### 1.8 Figures, tables, and captions
@@ -82,7 +82,7 @@ Last updated 2026-11-23.
 
 ### 1.9 Author workflow preferences (template)
 
-Fill in for your own setup, or record your choices in Section 2.8 of the paper-specific file.
+Fill in for your own setup, or record your choices in Section 2.8 (Author workflow preferences) of the paper-specific file.
 
 1. **Bibliography source:** `<where the .bib file comes from, e.g., synced from a reference manager>`. State whether agents may edit it by hand.
 2. **Local copies of cited works:** `<folder holding the PDFs>`. State whether agents may use the reference manager's app or must read the folder directly.

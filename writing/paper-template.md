@@ -68,7 +68,7 @@ Follow this glossary strictly across text, appendices, tables, and figure labels
 
 ### 2.8 Author workflow preferences
 
-These fill in the templates in Section 1.9 of `../general-rules.md` and Section 3.4 of `../agent-workflow.md`.
+These fill in the templates in Section 1.9 (Author workflow preferences) of `../general-rules.md` and Section 3.4 (Author workflow preferences) of `../agent-workflow.md`.
 
 1. **Bibliography:** <where the .bib file comes from, and whether agents may edit it>.
 2. **Local copies of cited works:** <folder, and whether agents may open the reference manager's app>.

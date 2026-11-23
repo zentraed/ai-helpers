@@ -10,7 +10,7 @@ Last updated 2026-11-23.
 
 Every draft or revision goes through two explicit passes rather than editing sentences in isolation:
 
-1. **Pass 1 (Truth, notation, and citation audit):** Verify every factual claim, numerical value, theorem precondition, and citation against its recorded source (the code, the release data or result files named in the paper-specific file, and the local copies of cited works; see Section 3.4). Flag any unverified statement rather than smoothing it over.
+1. **Pass 1 (Truth, notation, and citation audit):** Verify every factual claim, numerical value, theorem precondition, and citation against its recorded source (the code, the release data or result files named in the paper-specific file, and the local copies of cited works; see Section 3.4, Author workflow preferences). Flag any unverified statement rather than smoothing it over.
 2. **Pass 2 (Flow, terminology, and conciseness pass):** Read the full section continuously to:
    - Smooth transitions between sentences and paragraphs (given-to-new chaining, varied sentence lengths, explicit connectives).
    - Replace every avoided or coined term using the paper's glossary.
@@ -49,7 +49,7 @@ These examples are field-neutral. Each paper-specific file adds examples drawn f
 
 ### 3.4 Author workflow preferences (template)
 
-Fill in for your own setup, or record your choices in Section 2.8 of the paper-specific file.
+Fill in for your own setup, or record your choices in Section 2.8 (Author workflow preferences) of the paper-specific file.
 
 1. **Local copies of cited works:** `<folder holding the PDFs, and whether agents may open the reference manager's app>`.
 2. **Commits and review:** `<where edits are committed, the commit-message policy (e.g., whether AI co-author lines are allowed), and who reviews and pushes>`.
